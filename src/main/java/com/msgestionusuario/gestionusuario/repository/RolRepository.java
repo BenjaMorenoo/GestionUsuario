@@ -1,6 +1,7 @@
 package com.msgestionusuario.gestionusuario.repository;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
@@ -12,7 +13,8 @@ import com.msgestionusuario.gestionusuario.model.Roles;
 public interface RolRepository extends JpaRepository<Rol, Integer> {
     
     Rol save(Rol rol);
-    Rol findById(int idRol);
+    //Rol findById(int idRol);
+    Optional<Rol> findById(Integer idRol);
     /*Rol findByNombreRol(String nombreRol);*/
     List<Rol> findAll();
     Rol deleteById(int idRol);

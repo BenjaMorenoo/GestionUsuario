@@ -30,7 +30,7 @@ public class RolService {
     }
 
     public Rol findxIdRol(int idRol) {
-        return rolRepository.findById(idRol);
+        return rolRepository.findById(idRol).orElse(null);
     }
 
 
@@ -53,12 +53,14 @@ public class RolService {
     }
 
     public Rol eliminarRol(int idRol) {
-        Rol rol = rolRepository.findById(idRol);
-        if (rol != null && (rol.getUsuarios() == null || rol.getUsuarios().isEmpty())) {
-            rolRepository.deleteById(idRol);
-            return rol;
+        Optional<Rol> rolOpt = rolRepository.findById(idRol); // ✅ corregido
+        if (rolOpt.isPresent()) {
+            Rol rol = rolOpt.get();
+            if (rol.getUsuarios() == null || rol.getUsuarios().isEmpty()) {
+                rolRepository.deleteById(idRol);
+                return rol;
+            }
         }
-        // si tengo usuarios asociados al rol, no lo elimino
         return null;
     }
 
