@@ -39,3 +39,10 @@ http://localhost:8081/api/usuario
     "idRol": 2
   }
 }
+
+
+
+plantilla_registro_pruebas_unitarias_gestionusuarios que esta en este link https://docs.google.com/spreadsheets/d/1jp5w6ft6WbawjEOXMP701aG_uaoHFPm8z7egTwYmmIo/edit?pli=1&gid=1483674301#gid=1483674301 
+
+
+link del swagger http://localhost:8081/doc/swagger-ui/index.html#/
