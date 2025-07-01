@@ -45,7 +45,7 @@ public class UsuarioService {
             usuarioActualizado.setNombre(usuario.getNombre());
             usuarioActualizado.setApellido(usuario.getApellido());
             usuarioActualizado.setEmail(usuario.getEmail());
-            usuarioActualizado.setRol(usuario.getRol()); // añadir esta parte para poder daler el rol al usuario
+            usuarioActualizado.setRol(usuario.getRol()); 
 
 
             return usuarioRepository.save(usuarioActualizado);
@@ -55,11 +55,11 @@ public class UsuarioService {
 
     public Optional<Usuario> eliminarUsuario(int idUsuario) {
         Optional<Usuario> usuario = usuarioRepository.findById(idUsuario);
-        if (usuario != null) { // ⚠️ Aquí debería ser usuario.isPresent()
+        if (usuario.isPresent()) {
             usuarioRepository.deleteById(idUsuario);
             return usuario;
         }
-        return Optional.empty(); // ⚠️ Debes devolver Optional.empty() en lugar de null
+        return Optional.empty();
     }
 
     

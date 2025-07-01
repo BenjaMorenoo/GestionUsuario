@@ -84,6 +84,14 @@ class UsuarioServiceTest {
     }
 
     @Test
+    void testEditUsuario_noExiste() {
+        Usuario actualizado = new Usuario(1, "Luisito", "Alvarez", "luisito@mail.com", rol);
+        when(usuarioRepository.findById(1)).thenReturn(Optional.empty());
+        Usuario resultado = usuarioService.editUsuario(1, actualizado);
+        assertThat(resultado).isNull();
+    }
+
+    @Test
     void testEliminarUsuario() {
         Usuario usuario = new Usuario(1, "Beto", "Quintero", "beto@mail.com", rol);
 
@@ -92,5 +100,13 @@ class UsuarioServiceTest {
         Optional<Usuario> eliminado = usuarioService.eliminarUsuario(1);
         assertThat(eliminado).isPresent();
         verify(usuarioRepository).deleteById(1);
+    }
+
+    @Test
+    void testEliminarUsuario_noExiste() {
+        when(usuarioRepository.findById(99)).thenReturn(Optional.empty());
+        Optional<Usuario> eliminado = usuarioService.eliminarUsuario(99);
+        assertThat(eliminado).isEmpty();
+        verify(usuarioRepository, never()).deleteById(anyInt());
     }
 }

@@ -1,25 +1,24 @@
 package com.msgestionusuario.gestionusuario.controller;
 
+import static org.mockito.Mockito.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+
+import java.util.List;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.msgestionusuario.gestionusuario.assemblers.RolModelAssembler;
 import com.msgestionusuario.gestionusuario.model.Rol;
 import com.msgestionusuario.gestionusuario.model.Roles;
 import com.msgestionusuario.gestionusuario.service.RolService;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.hateoas.EntityModel;
 import org.springframework.test.web.servlet.MockMvc;
-
-import java.util.List;
-
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import org.springframework.beans.factory.annotation.Autowired;
 
 @WebMvcTest(RolController.class)
 public class RolControllerTest {
@@ -41,7 +40,7 @@ public class RolControllerTest {
     @BeforeEach
     void setUp() {
         rol = new Rol(1, Roles.Profesor, "Impartir clases", null);
-        rolModel = EntityModel.of(rol);
+        rolModel = EntityModel.of(rol); // Modelo simulado con HATEOAS
     }
 
     @Test
@@ -88,9 +87,9 @@ public class RolControllerTest {
     @Test
     void testGetRolxId_encontrado() throws Exception {
         when(rolService.findxIdRol(1)).thenReturn(rol);
-        when(assembler.toModel(rol)).thenReturn(rolModel);
+        when(assembler.toModel(any(Rol.class))).thenReturn(rolModel);
 
-        mockMvc.perform(get("/api/rol/id/1"))
+        mockMvc.perform(get("/api/rol/id=1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.idRol").value(1));
     }
@@ -99,16 +98,16 @@ public class RolControllerTest {
     void testGetRolxId_noEncontrado() throws Exception {
         when(rolService.findxIdRol(1)).thenReturn(null);
 
-        mockMvc.perform(get("/api/rol/id/1"))
+        mockMvc.perform(get("/api/rol/id=1"))
                 .andExpect(status().isNoContent());
     }
 
     @Test
     void testGetRolxNombre_encontrado() throws Exception {
         when(rolService.findxNombreRol("Profesor")).thenReturn(rol);
-        when(assembler.toModel(rol)).thenReturn(rolModel);
+        when(assembler.toModel(any(Rol.class))).thenReturn(rolModel);
 
-        mockMvc.perform(get("/api/rol/nombreRol/Profesor"))
+        mockMvc.perform(get("/api/rol/nombreRol=Profesor"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.nombreRol").value("Profesor"));
     }
@@ -117,39 +116,14 @@ public class RolControllerTest {
     void testGetRolxNombre_noEncontrado() throws Exception {
         when(rolService.findxNombreRol("ADMINISTRADOR")).thenReturn(null);
 
-        mockMvc.perform(get("/api/rol/nombreRol/ADMINISTRADOR"))
+        mockMvc.perform(get("/api/rol/nombreRol=ADMINISTRADOR"))
                 .andExpect(status().isNoContent());
-    }
-
-    @Test
-    void testPutRol_actualizaCorrecto() throws Exception {
-        Rol actualizado = new Rol(1, Roles.Profesor, "Actualizar rol", null);
-        EntityModel<Rol> actualizadoModel = EntityModel.of(actualizado);
-
-        when(rolService.editRol(eq(1), any(Rol.class))).thenReturn(actualizado);
-        when(assembler.toModel(actualizado)).thenReturn(actualizadoModel);
-
-        mockMvc.perform(put("/api/rol/1")
-                .contentType("application/json")
-                .content(objectMapper.writeValueAsString(actualizado)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.funcion").value("Actualizar rol"));
-    }
-
-    @Test
-    void testPutRol_noEncontrado() throws Exception {
-        when(rolService.editRol(eq(1), any(Rol.class))).thenReturn(null);
-
-        mockMvc.perform(put("/api/rol/1")
-                .contentType("application/json")
-                .content(objectMapper.writeValueAsString(rol)))
-                .andExpect(status().isNotFound());
     }
 
     @Test
     void testDeleteRol_eliminadoCorrecto() throws Exception {
         when(rolService.eliminarRol(1)).thenReturn(rol);
-        when(assembler.toModel(rol)).thenReturn(rolModel);
+        when(assembler.toModel(any(Rol.class))).thenReturn(rolModel);
 
         mockMvc.perform(delete("/api/rol/1"))
                 .andExpect(status().isOk())

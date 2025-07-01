@@ -125,4 +125,21 @@ public class RolServiceTest {
         assertThat(resultado).isNull();
         verify(rolRepository, never()).deleteById(anyInt());
     }
+
+    @Test
+    void testEditRol_noExiste() {
+        Rol nuevo = new Rol(1, Roles.Profesor, "Impartir evaluaciones", null);
+        when(rolRepository.findById(1)).thenReturn(Optional.empty());
+        Rol resultado = rolService.editRol(1, nuevo);
+        assertThat(resultado).isNull();
+        verify(rolRepository, never()).save(any(Rol.class));
+    }
+
+    @Test
+    void testEliminarRol_noExiste() {
+        when(rolRepository.findById(99)).thenReturn(Optional.empty());
+        Rol resultado = rolService.eliminarRol(99);
+        assertThat(resultado).isNull();
+        verify(rolRepository, never()).deleteById(anyInt());
+    }
 }

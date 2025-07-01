@@ -12,15 +12,15 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.hateoas.EntityModel;
 import org.springframework.http.MediaType;
+import org.springframework.hateoas.EntityModel;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.*;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -36,98 +36,115 @@ public class UsuarioControllerTest {
     @MockBean
     private UsuarioModelAssembler assembler;
 
-    @Autowired
-    private ObjectMapper objectMapper;
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     private Rol rol;
-    private Usuario usuario1;
-    private Usuario usuario2;
+    private Usuario usuario;
+    private EntityModel<Usuario> usuarioModel;
 
     @BeforeEach
     void setUp() {
         rol = new Rol(1, Roles.Profesor, "Imparte clases", new ArrayList<>());
-        usuario1 = new Usuario(1, "Juan", "Pérez", "juan@mail.com", rol);
-        usuario2 = new Usuario(2, "Ana", "López", "ana@mail.com", rol);
+        usuario = new Usuario(1, "Ana", "Lopez", "ana@mail.com", rol);
+        usuarioModel = EntityModel.of(usuario);
     }
 
     @Test
-    void testGetAllUsuarios() throws Exception {
-        List<Usuario> usuarios = Arrays.asList(usuario1, usuario2);
-        when(usuarioService.findAllUsuarios()).thenReturn(usuarios);
-        when(assembler.toModel(usuario1)).thenReturn(EntityModel.of(usuario1));
-        when(assembler.toModel(usuario2)).thenReturn(EntityModel.of(usuario2));
-
-        mockMvc.perform(get("/api/usuario"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$._embedded.usuarioList[0].nombre").value("Juan"))
-                .andExpect(jsonPath("$._embedded.usuarioList[1].nombre").value("Ana"));
-    }
-
-    @Test
-    void testGetUsuarioById() throws Exception {
-        when(usuarioService.findByXIdUsuario(1)).thenReturn(Optional.of(usuario1));
-        when(assembler.toModel(usuario1)).thenReturn(EntityModel.of(usuario1));
-
-        mockMvc.perform(get("/api/usuario/1"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.nombre").value("Juan"));
-    }
-
-    @Test
-    void testCrearUsuario() throws Exception {
-        Usuario nuevo = new Usuario(null, "Sofía", "Martínez", "sofia@mail.com", rol);
-        Usuario guardado = new Usuario(1, "Sofía", "Martínez", "sofia@mail.com", rol);
-
+    void testPostUsuario_creaNuevo() throws Exception {
+        Usuario nuevo = new Usuario(null, "Ana", "Lopez", "ana@mail.com", rol);
         when(usuarioService.findByXIdUsuario(null)).thenReturn(Optional.empty());
-        when(usuarioService.crearUsuario(any(Usuario.class))).thenReturn(guardado);
-        when(assembler.toModel(guardado)).thenReturn(EntityModel.of(guardado));
+        when(usuarioService.crearUsuario(any(Usuario.class))).thenReturn(usuario);
+        when(assembler.toModel(any(Usuario.class))).thenReturn(usuarioModel);
 
         mockMvc.perform(post("/api/usuario")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(nuevo)))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.nombre").value("Sofía"));
+                .andExpect(jsonPath("$.idUsuario").value(1));
     }
 
     @Test
-    void testCrearUsuario_conflict() throws Exception {
-        Usuario conflictUser = new Usuario(1, "Luis", "Mora", "luis@mail.com", rol);
-
-        when(usuarioService.findByXIdUsuario(1)).thenReturn(Optional.of(conflictUser));
+    void testPostUsuario_yaExiste() throws Exception {
+        when(usuarioService.findByXIdUsuario(1)).thenReturn(Optional.of(usuario));
 
         mockMvc.perform(post("/api/usuario")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(conflictUser)))
+                .content(objectMapper.writeValueAsString(usuario)))
                 .andExpect(status().isConflict());
     }
 
     @Test
-    void testEditarUsuario() throws Exception {
-        Usuario editado = new Usuario(1, "Luis", "González", "luisito@mail.com", rol);
-        when(usuarioService.editUsuario(eq(1), any(Usuario.class))).thenReturn(editado);
-        when(assembler.toModel(editado)).thenReturn(EntityModel.of(editado));
+    void testGetAllUsuarios_conDatos() throws Exception {
+        when(usuarioService.findAllUsuarios()).thenReturn(List.of(usuario));
+        when(assembler.toModel(any(Usuario.class))).thenReturn(usuarioModel);
+
+        mockMvc.perform(get("/api/usuario"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$._embedded.usuarioList[0].idUsuario").value(1));
+    }
+
+    @Test
+    void testGetAllUsuarios_listaVacia() throws Exception {
+        when(usuarioService.findAllUsuarios()).thenReturn(List.of());
+
+        mockMvc.perform(get("/api/usuario"))
+                .andExpect(status().isNoContent());
+    }
+
+    @Test
+    void testGetUsuarioById_encontrado() throws Exception {
+        when(usuarioService.findByXIdUsuario(1)).thenReturn(Optional.of(usuario));
+        when(assembler.toModel(any(Usuario.class))).thenReturn(usuarioModel);
+
+        mockMvc.perform(get("/api/usuario/1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.email").value("ana@mail.com"));
+    }
+
+    @Test
+    void testGetUsuarioById_noEncontrado() throws Exception {
+        when(usuarioService.findByXIdUsuario(99)).thenReturn(Optional.empty());
+
+        mockMvc.perform(get("/api/usuario/99"))
+                .andExpect(status().isNoContent());
+    }
+
+    @Test
+    void testPutUsuario_actualizaCorrecto() throws Exception {
+        Usuario actualizado = new Usuario(1, "Elena", "Vera", "elena@mail.com", rol);
+        when(usuarioService.editUsuario(eq(1), any(Usuario.class))).thenReturn(actualizado);
+        when(assembler.toModel(any(Usuario.class))).thenReturn(EntityModel.of(actualizado));
 
         mockMvc.perform(put("/api/usuario/1")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(editado)))
+                .content(objectMapper.writeValueAsString(actualizado)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.email").value("luisito@mail.com"));
+                .andExpect(jsonPath("$.email").value("elena@mail.com"));
     }
 
     @Test
-    void testEliminarUsuario() throws Exception {
-        Usuario eliminado = new Usuario(1, "Carlos", "Mora", "carlos@mail.com", rol);
+    void testPutUsuario_noEncontrado() throws Exception {
+        Usuario actualizado = new Usuario(1, "Ana", "Lopez", "nueva@mail.com", rol);
+        when(usuarioService.editUsuario(eq(1), any(Usuario.class))).thenReturn(null);
 
-        when(usuarioService.eliminarUsuario(1)).thenReturn(Optional.of(eliminado));
-        when(assembler.toModel(eliminado)).thenReturn(EntityModel.of(eliminado));
+        mockMvc.perform(put("/api/usuario/1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(actualizado)))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void testDeleteUsuario_encontrado() throws Exception {
+        when(usuarioService.eliminarUsuario(1)).thenReturn(Optional.of(usuario));
+        when(assembler.toModel(any(Usuario.class))).thenReturn(usuarioModel);
 
         mockMvc.perform(delete("/api/usuario/1"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.email").value("carlos@mail.com"));
+                .andExpect(jsonPath("$.idUsuario").value(1));
     }
 
     @Test
-    void testEliminarUsuario_noEncontrado() throws Exception {
+    void testDeleteUsuario_noEncontrado() throws Exception {
         when(usuarioService.eliminarUsuario(1)).thenReturn(Optional.empty());
 
         mockMvc.perform(delete("/api/usuario/1"))
